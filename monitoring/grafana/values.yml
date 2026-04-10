@@ -1,0 +1,16 @@
+grafana:
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+        - name: go-deploy-lab
+          orgId: 1
+          folder: Go Deploy Lab
+          type: file
+          disableDeletion: false
+          editable: false
+          options:
+            path: /var/lib/grafana/dashboards/go-deploy-lab
+
+  dashboardsConfigMaps:
+    go-deploy-lab: go-deploy-lab-dashboards

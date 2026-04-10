@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: go-deploy-lab
+  namespace: go-deploy-lab
+  labels:
+    app: go-deploy-lab
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: go-deploy-lab
+  template:
+    metadata:
+      labels:
+        app: go-deploy-lab
+    spec:
+      automountServiceAccountToken: false
+      initContainers:
+        - name: migrate
+          image: ghcr.io/r055le/go-deploy-lab-migrate:latest  # pin in production
+          args:
+            - "$(DATABASE_URL)"
+            - up
+          envFrom:
+            - secretRef:
+                name: go-deploy-lab-db
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65534
+            capabilities:
+              drop: [ALL]
+      containers:
+        - name: server
+          image: ghcr.io/r055le/go-deploy-lab:latest  # pin in production
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: go-deploy-lab
+            - secretRef:
+                name: go-deploy-lab-db
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
+            capabilities:
+              drop: [ALL]

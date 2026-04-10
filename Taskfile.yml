@@ -1,0 +1,68 @@
+version: '3'
+
+vars:
+  APP_NAME: go-deploy-lab
+  REGISTRY: ghcr.io/r055le
+  VERSION:
+    sh: git describe --tags --always --dirty 2>/dev/null || echo dev
+
+env:
+  CGO_ENABLED: '0'
+  PATH: '{{.PATH}}:/usr/local/go/bin'
+
+tasks:
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list-all
+
+  build:
+    desc: Build the server binary
+    cmds:
+      - go build -ldflags="-s -w" -o bin/server ./cmd/server
+
+  test:
+    desc: Run all tests with race detector
+    cmds:
+      - go test ./... -race -count=1
+
+  lint:
+    desc: Run golangci-lint
+    cmds:
+      - golangci-lint run ./...
+
+  fmt:
+    desc: Format all Go files
+    cmds:
+      - gofmt -w .
+
+  run:
+    desc: Run the server locally (requires DATABASE_URL)
+    deps: [build]
+    cmds:
+      - ./bin/server
+
+  docker:build:
+    desc: Build the container image
+    cmds:
+      - docker build -f docker/Dockerfile -t {{.REGISTRY}}/{{.APP_NAME}}:{{.VERSION}} .
+
+  docker:run:
+    desc: Run the container image
+    cmds:
+      - docker run --rm -p 8080:8080 --env-file .env {{.REGISTRY}}/{{.APP_NAME}}:{{.VERSION}}
+
+  migrate:up:
+    desc: Run database migrations
+    cmds:
+      - migrate -path migrations -database "${DATABASE_URL}" up
+
+  migrate:down:
+    desc: Roll back the last migration
+    cmds:
+      - migrate -path migrations -database "${DATABASE_URL}" down 1
+
+  clean:
+    desc: Remove build artifacts
+    cmds:
+      - rm -rf bin/
