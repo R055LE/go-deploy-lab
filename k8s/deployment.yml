@@ -23,7 +23,7 @@ spec:
       automountServiceAccountToken: false
       initContainers:
         - name: migrate
-          image: ghcr.io/r055le/go-deploy-lab-migrate:latest  # pin in production
+          image: ghcr.io/r055le/go-deploy-lab-migrate:sha-0000000  # replace with actual SHA
           args:
             - "$(DATABASE_URL)"
             - up
@@ -39,7 +39,7 @@ spec:
               drop: [ALL]
       containers:
         - name: server
-          image: ghcr.io/r055le/go-deploy-lab:latest  # pin in production
+          image: ghcr.io/r055le/go-deploy-lab:sha-0000000  # replace with actual SHA
           ports:
             - containerPort: 8080
               protocol: TCP
