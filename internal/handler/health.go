@@ -15,7 +15,7 @@ type healthResponse struct {
 func Health() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(healthResponse{Status: "ok"})
+		_ = json.NewEncoder(w).Encode(healthResponse{Status: "ok"})
 	}
 }
 
@@ -25,9 +25,9 @@ func Ready(s store.Store) http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		if err := s.Ping(r.Context()); err != nil {
 			w.WriteHeader(http.StatusServiceUnavailable)
-			json.NewEncoder(w).Encode(healthResponse{Status: "unavailable"})
+			_ = json.NewEncoder(w).Encode(healthResponse{Status: "unavailable"})
 			return
 		}
-		json.NewEncoder(w).Encode(healthResponse{Status: "ok"})
+		_ = json.NewEncoder(w).Encode(healthResponse{Status: "ok"})
 	}
 }

@@ -100,7 +100,9 @@ func TestPutAndGet(t *testing.T) {
 	}
 
 	var entry model.ConfigEntry
-	json.NewDecoder(rec.Body).Decode(&entry)
+	if err := json.NewDecoder(rec.Body).Decode(&entry); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
 	if entry.Value != "bar" {
 		t.Errorf("expected value 'bar', got %q", entry.Value)
 	}
@@ -140,7 +142,9 @@ func TestDeleteNotFound(t *testing.T) {
 
 func TestDeleteSuccess(t *testing.T) {
 	s := newFakeStore()
-	s.Put(context.Background(), "ns", "k", "v")
+	if _, err := s.Put(context.Background(), "ns", "k", "v"); err != nil {
+		t.Fatalf("setup: %v", err)
+	}
 	ch := handler.NewConfigHandler(s, testLogger())
 
 	mux := http.NewServeMux()
@@ -171,7 +175,9 @@ func TestListEmpty(t *testing.T) {
 	}
 
 	var entries []model.ConfigEntry
-	json.NewDecoder(rec.Body).Decode(&entries)
+	if err := json.NewDecoder(rec.Body).Decode(&entries); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
 	if len(entries) != 0 {
 		t.Errorf("expected empty list, got %d entries", len(entries))
 	}
